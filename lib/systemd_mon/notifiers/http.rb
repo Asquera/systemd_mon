@@ -14,7 +14,14 @@ module SystemdMon::Notifiers
       # keep the `history_size` last states around for each unit
       self.state_cache = Hash.new {|h, unit| h[unit] = SizedLifoBuffer.new(history_size) }
 
-      self.server = WEBrick::HTTPServer.new :BindAdress => bind_host, :Port => bind_port, :DoNotReverseLookup => true
+      self.server = WEBrick::HTTPServer.new(
+        :BindAdress         => bind_host,
+        :Port               => bind_port,
+        :AccessLog          => [],
+        :Logger             => WEBrick::Log.new(File.open(File::NULL, 'w')),
+        :DoNotReverseLookup => true
+      )
+
       server.mount_proc "/units" do |req, res|
         # path info is "" or "/" for requests on /units and /units/ respectively
         # but always contains the leading slash for /units/test.service
